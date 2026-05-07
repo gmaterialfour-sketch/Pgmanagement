@@ -3,11 +3,11 @@ package com.pgrental.backend.service;
 import com.pgrental.backend.config.JwtUtils;
 import com.pgrental.backend.entity.User;
 import com.pgrental.backend.repository.UserRepository;
+import com.pgrental.backend.queue.OtpMessageProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import java.time.Duration;
-import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -16,6 +16,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final JwtUtils jwtUtils;
+    private final OtpMessageProducer otpMessageProducer;
 
     private static final String OTP_PREFIX = "otp:";
 
@@ -23,7 +24,9 @@ public class AuthService {
         String otp = String.format("%04d", new Random().nextInt(10000));
         redisTemplate.opsForValue().set(OTP_PREFIX + phone, otp, Duration.ofMinutes(5));
         
-        // In real app, send via SMS. For dev, return it.
+        // Push to RabbitMQ for background delivery
+        otpMessageProducer.sendOtpMessage(phone, otp);
+        
         return otp;
     }
 

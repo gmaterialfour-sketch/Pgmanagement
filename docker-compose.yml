@@ -34,21 +34,29 @@ services:
       - db
       - redis
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
   backend-java:
     build:
       context: ./apps/backend-java
     ports:
-      - "5001:5000"
+      - "5000:5000"
     environment:
       - DATABASE_URL=jdbc:postgresql://db:5432/pg_rental
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379
+      - SPRING_RABBITMQ_HOST=rabbitmq
       - JWT_ACCESS_SECRET=replace-with-a-long-random-access-secret-java-version
       - WEB_ORIGIN=http://localhost:3000
     depends_on:
       - db
       - redis
+      - rabbitmq
 
 volumes:
   postgres_data:

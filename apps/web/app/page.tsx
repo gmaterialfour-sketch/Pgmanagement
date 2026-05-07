@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LocateFixed, Search } from "lucide-react";
+import { LocateFixed } from "lucide-react";
 import type { PgSummary } from "@pg-rental/api";
 import { Button } from "@pg-rental/ui";
 import { api } from "../lib/client";
 import { PgCard } from "../components/PgCard";
+import { GoogleSearch } from "../components/GoogleSearch";
 
 const fallback = { lat: 28.6803, lng: 77.2046 };
 
@@ -20,7 +21,6 @@ export default function HomePage() {
     try {
       const response = await api.nearbyPgs(nextCoords);
       if (response.data?.length === 0 && nextCoords.lat !== fallback.lat) {
-        // No pgs nearby, fallback to Delhi
         const fallbackResponse = await api.nearbyPgs(fallback);
         setPgs(fallbackResponse.data || []);
         setCoords(fallback);
@@ -28,7 +28,7 @@ export default function HomePage() {
       } else {
         setPgs(response.data || []);
         
-        // Get location name for UI
+        // Use free fallback geocoding if Google isn't providing a name yet
         const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${nextCoords.lat}&lon=${nextCoords.lng}&format=json`);
         const data = await geo.json();
         const name = data.display_name?.split(',')[0] + ', ' + (data.address?.city || data.address?.state || "Unknown");
@@ -85,14 +85,13 @@ export default function HomePage() {
             <Button onClick={useLocation}>
               <LocateFixed className="mr-2" size={17} /> Near Me
             </Button>
-            <div className="relative flex-1 max-w-sm">
-              <input 
-                type="text" 
-                placeholder="Search area (e.g. North Campus)..." 
-                className="h-10 w-full rounded-md border border-zinc-200 pl-10 pr-4 text-sm focus:border-campus focus:outline-none"
-              />
-              <Search className="absolute left-3 top-2.5 text-zinc-400" size={17} />
-            </div>
+            <GoogleSearch 
+              onLocationSelected={(next, name) => {
+                setCoords(next);
+                setLocationName(name);
+                loadNearby(next);
+              }} 
+            />
             <a href="/login" className="inline-flex h-10 items-center rounded-md px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-100">
               OTP login
             </a>

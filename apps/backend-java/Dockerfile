@@ -8,4 +8,5 @@ RUN mvn package -DskipTests
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE 5000
+ENTRYPOINT ["java", "-Duser.timezone=UTC", "-jar", "app.jar"]
