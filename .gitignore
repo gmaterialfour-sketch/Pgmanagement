@@ -1,0 +1,15 @@
+node_modules/
+.next/
+dist/
+.expo/
+.env
+apps/backend/.env
+apps/web/.env.local
+apps/mobile/.env
+uploads/
+*.tsbuildinfo
+*.log
+target/
+.idea/
+*.class
+.mvn/

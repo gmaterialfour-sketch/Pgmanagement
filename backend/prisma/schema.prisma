@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  password  String?  // Optional for OTP-only users
+  phone     String   @unique
+  role      String   @default("STUDENT") // STUDENT, OWNER, ADMIN
+  otp       String?  
+  otpExpiresAt DateTime?
+  
+  // Compliance & Security
+  aadhaarHash String? // Salted hash, no raw numbers
+  isVerified  Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  properties Property[]
+  tenant     Tenant?
+  bookings   Booking[]
+  complaints Complaint[]
+  sentMessages     ChatMessage[] @relation("SentMessages")
+  receivedMessages ChatMessage[] @relation("ReceivedMessages")
+}
+
+model Property {
+  id                String   @id @default(uuid())
+  name              String
+  description       String?
+  address           String
+  landmark          String?
+  googlePlaceId     String?
+  latitude          Float?
+  longitude         Float?
+  
+  // Ownership
+  ownerId           String
+  owner             User     @relation(fields: [ownerId], references: [id])
+  
+  // Configuration
+  totalFloors       Int      @default(1)
+  amenities         Json?    // Array of amenities
+  
+  // Metrics & Ratings (Aggregated)
+  foodRating        Float    @default(0)
+  safetyRating      Float    @default(0)
+  cleaningRating    Float    @default(0)
+  overallRating     Float    @default(0)
+  
+  // Financials
+  monthlyRent       Float    @default(0)
+  depositAmount     Float    @default(0)
+  
+  // Proximity (Distances in km)
+  distCollege       Float?
+  distMetro         Float?
+  distBus           Float?
+  
+  // Stats
+  totalRooms        Int      @default(0)
+  occupiedRooms     Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  rooms      Room[]
+  staff      Staff[]
+  bookings   Booking[]
+  complaints Complaint[]
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  roomNumber  String
+  type        String   // Single, Double, Triple, Dorm
+  rentAmount  Float
+  depositAmount Float  @default(0)
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  isOccupied  Boolean  @default(false)
+  
+  tenant Tenant?
+  bookings Booking[]
+}
+
+model Tenant {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  roomId      String?  @unique
+  room        Room?    @relation(fields: [roomId], references: [id])
+  checkInDate DateTime @default(now())
+  checkOutDate DateTime?
+  
+  payments Payment[]
+}
+
+model Staff {
+  id          String   @id @default(uuid())
+  name        String
+  role        String   // Cook, Cleaner, Security
+  phone       String?
+  aadhaarHash String?
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  
+  attendance  StaffAttendance[]
+  createdAt   DateTime @default(now())
+}
+
+model StaffAttendance {
+  id        String   @id @default(uuid())
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  date      DateTime @default(now())
+  status    String   // PRESENT, ABSENT
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  propertyId    String
+  property      Property @relation(fields: [propertyId], references: [id])
+  roomId        String
+  room          Room     @relation(fields: [roomId], references: [id])
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  checkIn       DateTime
+  checkOut      DateTime
+  status        String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  bookingType   String   @default("ONLINE")  // ONLINE, OFFLINE
+  totalAmount   Float
+  
+  paymentStatus String   @default("UNPAID")
+  payments      Payment[]
+  createdAt     DateTime @default(now())
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  bookingId     String?
+  booking       Booking? @relation(fields: [bookingId], references: [id])
+  tenantId      String?
+  tenant        Tenant?  @relation(fields: [tenantId], references: [id])
+  
+  amount        Float
+  mode          String   // UPI, CARD, CASH, WALLET
+  status        String   @default("PENDING") // SUCCESS, FAILED, PENDING
+  transactionId String?  @unique
+  receiptUrl    String?
+  
+  paidAt        DateTime @default(now())
+}
+
+model Complaint {
+  id          String   @id @default(uuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  title       String
+  description String
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  priority    String   @default("MEDIUM")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  content     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}

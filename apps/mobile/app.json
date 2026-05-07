@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "StayNear PG",
+    "slug": "staynear-pg",
+    "scheme": "staynearpg",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "plugins": ["expo-router"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f8fafc"
+      }
+    }
+  }
+}

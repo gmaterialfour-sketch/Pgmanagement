@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pg-rental/api": ["packages/api/src/index.ts"],
+      "@pg-rental/config": ["packages/config/src/index.ts"],
+      "@pg-rental/ui": ["packages/ui/src/index.tsx"],
+      "@pg-rental/utils": ["packages/utils/src/index.ts"]
+    }
+  }
+}
