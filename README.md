@@ -1,106 +1,66 @@
-# StayNear PG Rental SaaS
+# StayNear PG Rentals 🏠
 
-Production-oriented monorepo for a student PG rental platform with a shared backend, single PostgreSQL database, Next.js web app, Expo mobile app, and shared packages.
+A premium, location-based PG discovery and booking SaaS platform designed for students and working professionals. This project features a high-performance Java Spring Boot architecture integrated with official Google Maps APIs and professional-grade infrastructure.
 
-## Monorepo Structure
+## 🚀 Advanced Architecture
 
-```txt
-apps/
-  backend/   Express REST API, Prisma, Redis OTP auth
-  web/       Next.js App Router, TailwindCSS, Framer Motion
-  mobile/    React Native Expo app
-packages/
-  api/       Shared typed API client SDK
-  config/    Shared constants, env defaults, roles, room types
-  ui/        Shared UI primitives and design tokens
-  utils/     Distance, occupancy, pricing, formatting logic
+StayNear is built with a focus on scalability, security, and real-time geospatial accuracy.
+
+### 🏗️ Backend (Java Spring Boot 3)
+*   **Official Google Maps Integration**: Real-time discovery using Places API, Details API, and Geocoding API.
+*   **Intelligent Caching**: Automated 24-hour cache for Google metadata to optimize API costs.
+*   **Asynchronous Queuing**: RabbitMQ-powered background tasks for OTP delivery and notifications.
+*   **Geospatial Logic**: Native SQL Haversine formula for ultra-fast "Nearby" calculations.
+*   **Security & Stability**:
+    *   **Rate Limiting**: IP-based throttling using Bucket4j.
+    *   **Stateless Auth**: JWT-based authentication with refresh tokens.
+    *   **Observability**: Spring Boot Actuator for health and performance metrics.
+
+### 🎨 Frontend (Next.js 15)
+*   **Google Maps Autocomplete**: Seamless address search and coordinate detection.
+*   **Live Geospatial UI**: Real-time distance calculation ("1.2 km away") and area name detection.
+*   **Responsive Design**: Premium dark-mode-ready UI built with Tailwind CSS and Framer Motion.
+
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Core** | Java 17, Spring Boot 3.3.5, Hibernate |
+| **Database** | PostgreSQL 16 |
+| **Caching/Messaging** | Redis, RabbitMQ |
+| **Frontend** | Next.js 15, React, Tailwind CSS |
+| **APIs** | Google Maps Platform (Places, Details, JS SDK) |
+| **Infrastructure** | Docker, Maven |
+
+## 🏁 Getting Started
+
+### 1. Prerequisites
+*   Docker & Docker Compose
+*   Java 17+
+*   Node.js 18+
+
+### 2. Environment Setup
+Create a `.env` file in the root with your Google Maps API Key:
+```env
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your_google_key"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/pg_rental"
+REDIS_URL="redis://localhost:6379"
 ```
 
-The older `backend`, `frontend_web`, and `frontend_flutter` folders are left untouched for reference. The active implementation is under `apps/` and `packages/`.
-
-## Implemented Features
-
-- OTP login with Redis TTL storage, JWT access tokens, refresh sessions, and OTP rate limiting.
-- Roles: `student`, `owner`, `admin`.
-- PostgreSQL Prisma schema for users, PGs, room inventory, bookings, verification, refresh sessions, and nearby infrastructure.
-- `GET /api/pgs/nearby` geospatial 10 km radius search sorted by distance with pagination capped at 20.
-- Business logic for distance, occupancy rate, availability, and nearby rent comparison.
-- Google Places details and nearby infrastructure caching through Redis.
-- Transaction-safe booking flow that atomically increments room occupancy and prevents overbooking.
-- Owner dashboard APIs to add PGs, update room inventory, and view bookings.
-- ID proof upload and admin verification route.
-- Next.js student discovery, OTP login, PG details/booking, and owner dashboard pages.
-- Expo mobile discovery and OTP login screens using the same API SDK and shared logic.
-
-## Setup
-
-1. Install dependencies:
-
+### 3. Run with Docker
 ```bash
-npm install
+docker-compose up -d
 ```
 
-2. Create environment files:
+### 4. Local Development
+*   **Backend**: `npm run dev:backend-java` (Runs port 5000)
+*   **Frontend**: `npm run dev:web` (Runs port 3000)
 
-```bash
-copy .env.example .env
-copy .env.example apps\backend\.env
-```
+## 📍 Key Features
+- [x] **Near Me**: One-click location detection.
+- [x] **Dynamic Radius**: Automatic search limited to a strict 2km radius.
+- [x] **Smart Fallback**: Intelligent redirection to major hubs (Delhi) if no results are found nearby.
+- [x] **PG Analytics**: Occupancy rates, rent comparison, and verified safety ratings.
 
-Set `GOOGLE_MAPS_API_KEY` if you want live Google Places reviews and infrastructure. Without it, the app still works with database-backed PG data.
-
-3. Start PostgreSQL and Redis:
-
-```bash
-docker compose up -d db redis
-```
-
-4. Prepare the database:
-
-```bash
-npm run db:generate
-npm run db:migrate
-npm run db:seed
-```
-
-5. Run apps:
-
-```bash
-npm run dev:backend
-npm run dev:web
-npm run dev:mobile
-```
-
-Default URLs:
-
-- Backend: `http://localhost:5000/health`
-- Web: `http://localhost:3000`
-- Expo: terminal QR code / emulator launcher
-
-## Core API Routes
-
-```txt
-POST /api/auth/request-otp
-POST /api/auth/verify-otp
-POST /api/auth/refresh
-GET  /api/pgs/nearby?lat=28.6803&lng=77.2046&page=1&limit=20
-GET  /api/pgs/:id
-POST /api/bookings
-GET  /api/owners/dashboard
-POST /api/owners/pgs
-PATCH /api/owners/pgs/:id/rooms
-POST /api/verifications/id-proof
-PATCH /api/verifications/:id/review
-```
-
-In development, `POST /api/auth/request-otp` returns `devOtp` so the flow can be tested without an SMS provider. Replace that response branch with Twilio/Firebase/SNS delivery before production.
-
-## Verification Commands
-
-```bash
-npm run typecheck
-npm run build -w @pg-rental/backend
-npm run build -w @pg-rental/web
-```
-
-The current workspace passes all three. `npm audit` currently reports dependency ecosystem advisories; use `npm audit fix` carefully and test after changes.
+---
+Built with ❤️ by Antigravity for StayNear PG Rentals.
