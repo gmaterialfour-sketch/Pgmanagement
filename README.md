@@ -9,12 +9,13 @@ StayNear is built with a focus on scalability, security, and real-time geospatia
 ### 🏗️ Backend (Java Spring Boot 3)
 *   **Official Google Maps Integration**: Real-time discovery using Places API, Details API, and Geocoding API.
 *   **Intelligent Caching**: Automated 24-hour cache for Google metadata to optimize API costs.
+*   **PostGIS Spatial Indexing**: Advanced geospatial queries using `ST_Distance` and `ST_DWithin` for millisecond performance at scale.
 *   **Asynchronous Queuing**: RabbitMQ-powered background tasks for OTP delivery and notifications.
-*   **Geospatial Logic**: Native SQL Haversine formula for ultra-fast "Nearby" calculations.
+*   **Database Migrations**: Versioned schema management using **Flyway**.
+*   **API Documentation**: Automated OpenAPI 3.0 specs via **Swagger UI** (`/swagger-ui.html`).
 *   **Security & Stability**:
     *   **Rate Limiting**: IP-based throttling using Bucket4j.
     *   **Stateless Auth**: JWT-based authentication with refresh tokens.
-    *   **Observability**: Spring Boot Actuator for health and performance metrics.
 
 ### 🎨 Frontend (Next.js 15)
 *   **Google Maps Autocomplete**: Seamless address search and coordinate detection.
@@ -26,11 +27,30 @@ StayNear is built with a focus on scalability, security, and real-time geospatia
 | Layer | Technologies |
 | :--- | :--- |
 | **Core** | Java 17, Spring Boot 3.3.5, Hibernate |
-| **Database** | PostgreSQL 16 |
+| **Database** | PostgreSQL 16 + **PostGIS** |
 | **Caching/Messaging** | Redis, RabbitMQ |
 | **Frontend** | Next.js 15, React, Tailwind CSS |
-| **APIs** | Google Maps Platform (Places, Details, JS SDK) |
-| **Infrastructure** | Docker, Maven |
+| **Infrastructure** | Docker, Flyway, Swagger |
+
+## 📈 Scalability & Systems Design
+
+StayNear is designed with a **production-first** mindset:
+
+1.  **Horizontal Scaling**: The stateless Java backend can be scaled to N instances behind a Load Balancer (Nginx/AWS ELB).
+2.  **Geospatial Performance**: By using **PostGIS GIST indexes** instead of raw Haversine calculations, the system maintains O(log N) search performance even with millions of PGs.
+3.  **Distributed Caching**: Using Redis for OTPs and session data allows for seamless scaling without losing user state.
+4.  **Event-Driven Workers**: Heavy tasks (OTP, Image Processing, Analytics) are offloaded to **RabbitMQ workers**, preventing API latency.
+
+## 📍 Request Flow
+```text
+Client (Web/Mobile) 
+   → Nginx (Reverse Proxy) 
+   → Spring Boot API (v1)
+      → Redis (Cache Hit?)
+      → PostgreSQL + PostGIS (DB)
+      → RabbitMQ (Async Tasks)
+      → Google Maps APIs (External Sync)
+```
 
 ## 🏁 Getting Started
 
@@ -39,28 +59,14 @@ StayNear is built with a focus on scalability, security, and real-time geospatia
 *   Java 17+
 *   Node.js 18+
 
-### 2. Environment Setup
-Create a `.env` file in the root with your Google Maps API Key:
-```env
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your_google_key"
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/pg_rental"
-REDIS_URL="redis://localhost:6379"
-```
-
-### 3. Run with Docker
+### 2. Run with Docker
 ```bash
 docker-compose up -d
 ```
 
-### 4. Local Development
+### 3. Local Development
 *   **Backend**: `npm run dev:backend-java` (Runs port 5000)
 *   **Frontend**: `npm run dev:web` (Runs port 3000)
-
-## 📍 Key Features
-- [x] **Near Me**: One-click location detection.
-- [x] **Dynamic Radius**: Automatic search limited to a strict 2km radius.
-- [x] **Smart Fallback**: Intelligent redirection to major hubs (Delhi) if no results are found nearby.
-- [x] **PG Analytics**: Occupancy rates, rent comparison, and verified safety ratings.
 
 ---
 Built with ❤️ by Antigravity for StayNear PG Rentals.
