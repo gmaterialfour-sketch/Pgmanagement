@@ -33,7 +33,19 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    loadNearby(fallback);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const next = { lat: position.coords.latitude, lng: position.coords.longitude };
+          setCoords(next);
+          loadNearby(next);
+        },
+        () => loadNearby(fallback),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      loadNearby(fallback);
+    }
   }, []);
 
   function useLocation() {
