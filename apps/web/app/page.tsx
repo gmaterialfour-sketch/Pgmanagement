@@ -19,14 +19,24 @@ export default function HomePage() {
     setLoading(true);
     try {
       const response = await api.nearbyPgs(nextCoords);
-      setPgs(response.data || []);
-      
-      // Get location name for UI
-      if (nextCoords.lat !== fallback.lat) {
+      if (response.data?.length === 0 && nextCoords.lat !== fallback.lat) {
+        // No pgs nearby, fallback to Delhi
+        const fallbackResponse = await api.nearbyPgs(fallback);
+        setPgs(fallbackResponse.data || []);
+        setCoords(fallback);
+        setLocationName("Delhi (Fallback)");
+      } else {
+        setPgs(response.data || []);
+        
+        // Get location name for UI
         const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${nextCoords.lat}&lon=${nextCoords.lng}&format=json`);
         const data = await geo.json();
-        setLocationName(data.display_name.split(',')[0] + ', ' + (data.address.city || data.address.state));
+        const name = data.display_name?.split(',')[0] + ', ' + (data.address?.city || data.address?.state || "Unknown");
+        setLocationName(name);
       }
+    } catch (err) {
+      console.error(err);
+      setPgs([]);
     } finally {
       setLoading(false);
     }
