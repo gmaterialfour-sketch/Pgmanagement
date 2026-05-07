@@ -10,12 +10,12 @@ import org.springframework.data.repository.query.Param;
 public interface PgRepository extends JpaRepository<Pg, String> {
     
     @Query(value = "SELECT p.*, " +
-           "(6371 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) AS distance " +
+           "ST_Distance(p.location_geom, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) / 1000.0 AS distance " +
            "FROM pgs p " +
-           "WHERE (6371 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) <= :radius " +
+           "WHERE ST_DWithin(p.location_geom, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :radius * 1000) " +
            "ORDER BY distance ASC",
            countQuery = "SELECT count(*) FROM pgs p " +
-           "WHERE (6371 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) <= :radius",
+           "WHERE ST_DWithin(p.location_geom, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :radius * 1000)",
            nativeQuery = true)
     Page<Pg> findNearby(@Param("lat") Double lat, @Param("lng") Double lng, @Param("radius") Double radius, Pageable pageable);
 }
